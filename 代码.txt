@@ -1,0 +1,683 @@
+//￥￥￥￥￥￥ 客户消费积分管理系统 ￥￥￥￥￥￥￥￥￥
+//（1）采用一定的存储结构进行客户信息的存储；
+//（2）对客户的信息可以进行修改、删除、添加；
+//（3）能够根据消费情况进行客户积分的计算；
+//（4）根据积分情况实行不同程度的打折优惠。
+
+#include<stdio.h>//标准的输入输出库函数
+#include<stdlib.h>
+#include<malloc.h>//动态存储分配函数
+#include<string.h>//字符串函数
+#include<conio.h>//getch()函数就是在这个头文件里定义的
+#define ListSize 100
+
+//客户结点
+typedef struct cNode
+{
+	char name[20];//客户姓名
+	char id[6];//客户ID号
+	double consumption;//客户消费
+	double integral;//客户积分
+	struct cNode *next;  
+}cNode, *cList;
+
+//管理员结点
+typedef struct uNode
+{
+	char userName[20];//管理员用户名
+	char userPassWord[6];//管理员密码
+	struct uNode *next;
+}uNode, *uList;
+
+//函数声明
+void Welcome();//系统欢迎界面
+void ShowTitle();//客户信息表头
+void User_menu();//主菜单
+void userChoice();//管理员选项
+void getPass(char *pass);//输入密码时加密
+void InitUserList(uList *head);//管理员单链表初始化操作
+int uListEmpty(uList head);//判断管理员链表是否为空
+uNode* SearchByUserName(uList head, char strUserName[]);//按用户名查找管理员
+void userRegister(uList head);//管理员注册
+void LoginOk();//管理员登录成功
+void Login(uList head);//管理员登录
+void Print(cNode &node);//输出一个客户信息
+void InitConsumerList(cList *head);//客户单链表的初始化操作
+double Discount(double integral);//客户积分折扣函数
+int ListEmpty(cList head);//判断客户单链表是否为空
+cNode* SearchById(cList head, char id[]);//根据id查找客户
+void SearchConsumer(cList head);//查找客户函数
+void AddConsumer(cList head);//添加客户函数
+void DeleteConsumer(cList head);//删除客户
+void ModifyConsumer(cList head);//删除客户
+void DisplayAll(cList head);//显示全部客户信息
+void Count(cList head,char ID[]);//统计客户积分函数
+
+//系统欢迎界面
+void Welcome()
+{
+	printf("\n");
+    printf("*****************************\n");
+    printf("**                         **\n");
+    printf("**        欢迎使用         **\n");
+	printf("**                         **\n");
+    printf("** $ 客户消费积分管理系统 $**\n");
+    printf("**                         **\n");
+    printf("*****************************\n");
+}
+//管理员选项
+void userChoice()
+{
+	printf("\n\n");
+	printf("*----------------------------*\n");
+	printf("*       1:管理员登录         *\n");
+	printf("*----------------------------*\n");
+	printf("*       2:管理员注册         *\n");
+	printf("*----------------------------*\n");
+	
+}
+//管理员单链表初始化操作
+void InitUserList(uList *head)
+{
+	if((*head = (uList)malloc(sizeof(uNode))) == NULL)
+		exit(-1);
+	(*head)->next = NULL;
+}
+//判断管理员链表是否为空
+int uListEmpty(uList head)
+{
+	if(head ->next ==NULL)
+		return 1;
+	else
+		return 0;
+}
+//输入密码时加密
+void getPass(char *pass)//char pass[]
+{
+	int i;
+	for(i=0;(pass[i]=getch())!=13;i++)
+		printf("*");
+	pass[i]='\0';
+}
+//按用户名查找管理员
+uNode* SearchByUserName(uList head, char strUserName[])
+{
+	//查找成功 返回结点， 否则返回NULL
+	int flag = 0;
+	uNode *p;
+	//先判断链表是否为空
+	if(uListEmpty(head))
+		return NULL;
+	p = head ->next;
+	while(p)
+	{
+		if(strcmp(strUserName,p->userName)!=0)
+			p = p ->next;
+		else
+		{
+			flag = 1;
+			break;
+		}
+	}
+	if(flag = 1)
+		return p;
+	else
+		return NULL;
+}
+//管理员注册
+void userRegister(uList head)
+{
+	char strUserName[20];
+	char strPassWord[10];
+	char strPassWord2[10];
+	uNode *user, *q;
+	q = head;
+	if((user = (uNode*)malloc(sizeof(uNode))) == NULL)
+		exit(-1);
+	printf("请输入用户名：");
+	scanf("%s",strUserName);
+	while(SearchByUserName(head,strUserName)!= NULL)
+	{
+		printf("该用户（管理员）已存在，请重新输入（6位）:");
+		scanf("%s",strUserName);
+	}
+	strcpy(user->userName, strUserName);
+
+	printf("请输入密码(6位)：");
+	//scanf("%s",strPassWord);
+	getPass(strPassWord);
+	while(strlen(strPassWord)!=6)
+	{
+		printf("\n密码位数不符，请重新输入（6位）:");
+		//scanf("%s",strPassWord);
+		getPass(strPassWord);
+	}
+	printf("\n请再次输入密码：");
+	//scanf("%s",strPassWord2);
+	getPass(strPassWord2);
+	while(strcmp(strPassWord,strPassWord2)!=0)
+	{
+		printf("\n两次密码不一致！请从新输入:");
+		//scanf("%s",strPassWord2);
+		getPass(strPassWord2);
+	}
+	
+	strcpy(user->userPassWord, strPassWord2);
+
+	//在链表尾插入新结点
+	while(q->next!=NULL)
+	{
+		q = q->next;
+	}
+	user->next = q->next;
+	q->next = user;
+	printf("\n注册成功！请返回登录");
+	getch();
+	system("cls");
+
+
+}
+//客户信息表头
+void ShowTitle()
+{
+	printf("----------------------------------------------\n");
+	printf("     姓名   会员卡号    消费    积分   折扣\n");
+	printf("----------------------------------------------\n");
+}
+//主菜单
+void User_menu()
+{
+	printf("\n");
+	printf("********************************\n");
+	printf("*        <<主菜单>>            *\n");
+	printf("********************************\n");
+	printf("*    1:添加客户                *\n");
+	printf("*------------------------------*\n");
+	printf("*    2:查找客户                *\n");
+	printf("*------------------------------*\n");
+	printf("*    3:修改客户信息            *\n");
+	printf("*------------------------------*\n");
+	printf("*    4:删除客户                *\n");
+	printf("*------------------------------*\n");
+	printf("*    5:显示全部客户            *\n");
+	printf("*------------------------------*\n");
+	printf("*    6:统计客户积分            *\n");
+	printf("*------------------------------*\n");
+	printf("*    0:退出                    *\n");
+	printf("********************************\n");
+}
+//输出一个客户信息
+void Print(cNode &node)
+{
+	
+	printf("  %8s %8s %8.2f %8.2f %8.2f\n", node.name, node.id, node.consumption, node.integral, Discount(node.integral));
+	printf("----------------------------------------------\n");
+	/*printf("姓名：%s\n", node.name);
+	printf("会员卡号：%s\n", node.id);
+	printf("消费：%.2f\n", node.consumption);
+	printf("积分：%.2f\n", node.integral);
+	printf("折扣：%.2f折\n",Discount(node.integral));*/
+}
+//客户单链表的初始化操作
+void InitConsumerList(cList *head)
+{
+	//将单链表初始化为空，动态生成一个头结点，并将头结点的指针域置为空
+	//如果申请失败退出程序
+	if((*head = (cList)malloc(sizeof(cNode))) == NULL)
+		exit(-1);
+	(*head) ->next = NULL;
+}
+//客户积分折扣函数
+double Discount(double integral)
+{
+	double discount;
+	if(integral<=10)
+	{
+		discount=0;
+	}
+	else if (integral>10&&integral<=50)
+	{
+		discount=9;
+	}
+	else if (integral>50&&integral<=100)
+	{
+		discount=8;
+	}
+	else if (integral>100&&integral<=200)
+	{
+		discount=7.5;
+	}
+	else if (integral>200&&integral<=300)
+	{
+		discount=7;
+	}
+	else if (integral>30)
+	{
+		discount=6;
+	}
+	return discount;
+	
+}
+//判断客户单链表是否为空
+int ListEmpty(cList head)
+{
+	if(head ->next ==NULL)
+		return 1;
+	else
+		return 0;
+}
+//根据id查找客户
+cNode* SearchById(cList head, char id[])
+{
+	//查找成功 返回当前结点， 否则返回NULL
+	int flag = 0;
+	cNode *p;
+	//先判断链表是否为空
+	if(ListEmpty(head))
+		return NULL;
+	p = head ->next;
+	while(p)
+	{
+		if(strcmp(id,p->id)!=0)
+			p = p ->next;
+		else
+		{
+			flag = 1;
+			break;
+		}
+	}
+	if(flag = 1)
+		return p;
+	else
+		return NULL;
+}
+//查找客户函数
+void SearchConsumer(cList head)
+{
+	//用来暂存id
+	char id[10];
+	//用来指向通过SearchById(head,id)函数返回的客户结点，即查找的那个客户。
+	cNode *node;
+	printf("请输入要查找的客户ID(输入0返回):");
+	scanf("%s",&id);
+	if(strcmp(id,"0")==0)
+	{
+		return;
+	}
+	//提示用户输入符合要求的卡号
+	while(strlen(id)!=6)
+	{
+		printf("卡号位数不符，请重新输入（6位）(输入0返回):");
+		scanf("%s",id);
+		if(strcmp(id,"0")==0)
+		{
+			return;
+		}
+	}
+	//判断该卡号的客户存不存在
+	while(SearchById(head,id)== NULL)
+	{
+		printf("该客户不存在，请重新输入（6位）(输入0返回):");
+		scanf("%s",id);
+		if(strcmp(id,"0")==0)
+		{
+			return;
+		}
+	}
+	node = SearchById(head, id);
+	//输出客户信息的表头
+	ShowTitle();
+	//输出当前查找的客户的所有信息
+	Print(*node);
+	getch();
+	system("cls");
+}
+//添加客户函数
+void AddConsumer(cList head)
+{
+	char strId[7];//用来暂存客户id
+	double discount;	//用来存放折扣
+	cNode *consumer, *q;	//*consumer用来指向新客户的结点，*q用来辅助新结点的插入
+	q = head;
+	// 动态生成一个新结点，如果申请失败，退出程序。
+	if((consumer = (cNode*)malloc(sizeof(cNode))) == NULL)
+		exit(-1);
+	printf("请输入姓名：");
+	scanf("%s",&consumer->name);
+	printf("请输入会员卡号(6位)：");
+	scanf("%s",strId);
+	//提示用户输入符合要求的6位卡号
+	while(strlen(strId)!=6)
+	{
+		printf("卡号位数不符，请重新输入（6位）:");
+		scanf("%s",strId);
+	}
+	//查找该卡号是否已经注册
+	while(SearchById(head,strId)!= NULL)
+	{
+		printf("该卡号已存在，请重新输入（6位）:");
+		scanf("%s",strId);
+	}
+	strcpy(consumer->id, strId);
+	printf("请输入消费金额：");
+	scanf("%lf",&consumer->consumption);
+	consumer->integral = consumer->consumption/10;//计算出客户的积分
+	printf("折扣：%.2f折\n",Discount(consumer->integral));//根据客户的积分计算出客户的折扣
+	//从链表的尾部插入
+	while(q->next!=NULL)
+	{
+		q = q->next;
+	}
+	consumer->next = q->next;
+	q->next = consumer;
+	printf("添加成功！");
+	getch();
+	system("cls");
+
+}
+//删除客户
+void DeleteConsumer(cList head)
+{
+	char id[10];
+	int f;
+	cNode *pre, *p;
+	pre = head;
+	//先判断链表是否为空
+	if(ListEmpty(head))
+	{
+		printf("数据表为空,请先添加客户！\n");
+	}
+	printf("请输入将要删除的客户的ID：");
+	scanf("%s", id);
+	while(strlen(id)!=6)
+	{
+		printf("卡号位数不符，请重新输入（6位）:");
+		scanf("%s",id);
+	}
+	while(SearchById(head,id)== NULL)
+	{
+		printf("该客户不存在，请重新输入（6位）:");
+		scanf("%s",id);
+	}
+	while(strcmp(id,pre->next->id)!=0)
+	{
+		pre= pre->next;
+	}
+	p = pre->next;
+	printf("\n\nID为%s的客户的详细信息如下：\n", id);
+	ShowTitle();
+	Print(*p);
+	printf("确认删除？ 1确认 2取消 请选择：");
+	scanf("%d", &f);
+	switch(f)
+	{
+	case 1:
+		pre->next = p->next;
+		free(p);
+		printf("删除成功!");
+		break;
+	case 2:
+		printf("请从新输入");
+		break;
+
+	}
+	getch();
+	system("cls");
+	
+}
+//3 修改客户信息
+void ModifyConsumer(cList head)
+{
+	int choose,x,flag = 0;
+	double y,z;
+	char id[10];
+	cNode *node;
+	//先判断链表是否为空
+	if(ListEmpty(head))
+	{
+		printf("数据表为空,请先添加客户！\n");
+	}
+	printf("请输入要修改的客户ID:");
+	scanf("%s",&id);
+	//首先查找该客户存不存在
+	while(strlen(id)!=6)
+	{
+		printf("卡号位数不符，请重新输入（6位）:");
+		scanf("%s",id);
+	}
+	while(SearchById(head,id)== NULL)
+	{
+		printf("该客户不存在，请重新输入（6位）:");
+		scanf("%s",id);
+	}
+	//如果查找到了该用户，则输出该客户的信息
+	node = SearchById(head, id);
+	ShowTitle();
+	Print(*node);
+	//可以修改客户的姓名\消费金额\消费积分通过计算及时更新
+	do
+	{
+		printf("\n");
+		printf("*****************\n");
+		printf("*   1:客户姓名  *\n");
+		printf("*---------------*\n");
+		printf("*   2:消费金额  *\n");
+		printf("*---------------*\n");
+		printf("*   0:退出      *\n");
+		printf("*****************\n");
+		printf("请输入功能选项：");
+		scanf("%d",&choose);
+		switch(choose)
+		{
+		case 1: printf("请输入修改后的姓名：");
+				scanf("%s",node->name);
+				printf("姓名修改成功！");
+				break;
+		case 2:
+				printf("**************************\n");
+				printf("*   1:覆盖以前的消费     *\n");
+				printf("*------------------------*\n");
+				printf("*   2:此基础上续加消费   *\n");
+				printf("**************************\n");
+				printf("请输入功能选项：");
+				scanf("%d",&x);
+				switch(x)
+				{
+				case 1:
+					printf("请输入修改后的消费：");
+					scanf("%lf",&node->consumption);
+					node->integral = node->consumption/10;          //更新客户的积分
+					printf("消费金额修改成功！");
+					break;
+				case 2:
+					printf("请输入续加金额：");
+					scanf("%lf",&z);
+					node->consumption=(node->consumption)+z;
+					node->integral = node->consumption/10;			 //更新客户的积分
+					printf("消费金额修改成功！");
+					break;
+				default:
+					printf("输入的功能选项不存在，请重新输入！");
+				}
+				break;
+		case 0:
+			flag = 1;
+			break;
+		default:
+			printf("输入的功能选项不存在，请重新输入！");
+		}
+		if(flag == 1)
+			break;
+	}while(1);
+	system("cls");
+
+}
+//显示全部客户信息
+void DisplayAll(cList head)
+{
+	cNode *p;
+	p = head->next;
+	//先判断链表是否为空
+	if(ListEmpty(head))
+	{
+		printf("数据表为空,请先添加客户！\n");
+	}
+	ShowTitle();
+	while(p)
+	{
+		Print(*p);
+		p = p->next;
+	}
+}
+//统计客户积分函数
+void Count(cList head,char ID[])
+{ 
+	cNode *p;
+	int flag=0;
+	p=head;
+	if(p->next==NULL)
+	{
+		printf("\n没有客户!");
+	}
+	else
+	{
+		while(p->next!=NULL)
+		{
+			p=p->next;
+			if(strcmp(ID,p->id)==0)
+			{
+				printf("请输入消费金额：");
+				scanf("%lf",&p->consumption);
+				p->integral+=p->consumption/10;
+				{
+					printf("\n姓名：%s\n",p->name);
+					printf("会员卡号：%s\n",p->id);
+					printf("消费：%.2f\n",p->consumption);
+					printf("积分：%.2f\n",p->consumption);
+				}
+				flag=1;
+			}
+		}
+		if(!flag)
+		{
+			printf("该客户不存在!\n");
+		}
+	}
+	getch();
+	system("cls");
+}
+//管理员登录成功
+void LoginOk()
+{
+	int fun;
+	cNode *node;
+	cList L;
+	InitConsumerList(&L);
+	char id[10];
+    printf("登录成功！\n");
+	do
+	{
+		User_menu();
+		printf("请输入功能选项:");
+		scanf("%d", &fun);
+		switch(fun)
+		{
+		case 0:
+			exit(0);
+		case 1:
+			system("cls");
+			AddConsumer(L);
+			break;
+		case 2:
+			system("cls");
+			SearchConsumer(L);
+			break;
+		case 3:
+			system("cls");
+			ModifyConsumer(L);
+			break;
+		case 4:
+			system("cls");
+			printf("全部客户信息如下;\n");
+			DisplayAll(L);
+			DeleteConsumer(L);
+			break;
+		case 5:
+			system("cls");
+			DisplayAll(L);
+			getch();
+			system("cls");
+			break;
+		case 6:
+			system("cls");
+			printf("\n请输入客户卡号:");
+			scanf("%s",id);
+			Count(L,id);
+			break;
+		default:
+			printf("输入的功能不存在，请重新输入！");
+		}
+	}while(1);
+}
+//管理员登录
+void Login(uList head)
+{
+	int i = 2;
+	char strUserName[20];
+	char strPassWord[10];
+	uNode p;
+	uNode *user, *q;
+	printf("请输入用户名：");
+	scanf("%s",strUserName);
+	while((user = SearchByUserName(head,strUserName))== NULL)
+	{
+		printf("该用户（管理员）不存在，请输入正确的用户名）:");
+		scanf("%s",strUserName);
+	}
+
+	printf("请输入密码(6位)：");
+	getPass(strPassWord);
+	while(i > 0 && strcmp(strPassWord, user->userPassWord)!= 0)
+	{
+		printf("密码输入错误，请重新输入6位,你还有 %d 次机会:", i);
+		getPass(strPassWord);
+		i--;
+	
+	}
+	if(i<= 0)
+	{
+		printf("登录失败！");
+		return;
+		
+	}
+	else
+	{
+		system("cls");
+		LoginOk();
+	}
+}
+void main()
+{	
+	int a;
+	uList U;
+	InitUserList(&U);
+	do
+	{
+		Welcome();
+		userChoice();
+		printf("请输入你的选择：");
+		scanf("%d", &a);
+		switch(a)
+		{
+		case 1:
+			Login(U);
+			break;
+		case 2:
+			userRegister(U);
+			break;
+		default:
+			printf("输入的功能不存在，请重新输入！");
+		}
+		
+	}while(1);
+}
