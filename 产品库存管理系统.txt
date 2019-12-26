@@ -1,0 +1,747 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<string.h>
+#include<conio.h>
+#define ok 1
+#define error 0
+#define overflow 0
+#define SQMOUTLINK_INIT_SIZE  100
+#define SQMOUTLINKINCREMENT 10
+
+typedef struct date
+{
+ int year;
+ int month;
+ int day;
+}date;
+
+typedef struct productnode
+{
+   char product_name[40];      //产品名称
+   int  product_quantity;     //产品总量
+   int  sales_quantity;      //销售数量
+   double  product_price;   //产品单价
+   double  product_income; //销售收益
+   int  product_stock;    //产品库存
+   date buy_time;        //进货日期
+   date sales_time;     //销售日期
+   struct productnode *next;//链表
+}productnode,*plinklist;
+
+typedef struct kindnode
+{
+   productnode * first_product;    //头指针
+   char  pkindname[40];           //商品名称
+   int   kind_number;            //产品种类个数
+}kindnode;
+
+typedef  struct 
+{
+ kindnode* kindelem;
+ int length;
+ int listsize;
+}sqlist;
+
+int Init(sqlist &L)
+{
+   int i;
+   L.kindelem=(kindnode*)malloc(SQMOUTLINK_INIT_SIZE*sizeof(kindnode));
+   if(!L.kindelem) exit(overflow);
+   L.length=0;
+   L.listsize=SQMOUTLINK_INIT_SIZE;
+   for(i=0;i<L.listsize;i++)
+   {
+    (L.kindelem[i]).first_product=NULL;//初始化
+    (L.kindelem[i]).kind_number=0;
+   }
+   return ok;
+}
+
+int Create(sqlist &L)//输入数据（顺序表）
+{
+  plinklist  p,q;
+  int i,j,k,n;
+   FILE *fp;
+   fp=fopen("d:\\库存.txt","wb");
+  printf("请输入商品类数量:\n");
+  do
+  {
+   scanf("%d",&n);
+   if(n<0)
+   {
+    printf("对不起，你输入有误！请重新选择（n>=0）\n");
+   }
+  }while(n<0);
+  fprintf(fp,"%d\t",n);
+  for(i=0;i<n;i++)
+  {
+   printf("请输入第%d个商品类的名称:\n",(i+1));
+   scanf("%s",&(L.kindelem[i].pkindname));
+   fprintf(fp,"%s\t",L.kindelem[i].pkindname);
+   printf("请输入这类商品含有的产品种类数量:\n");
+   do
+   {
+    scanf("%d",&k);
+    if(k<0)
+    {
+     printf("对不起，你输入有误！请重新选择（k>=0）\n");//程序的健壮性
+    }
+   }while(k<0);
+   fprintf(fp,"%d\t",k);
+   L.kindelem[i].kind_number=k;
+      if(k>=1)
+   {
+    p=(plinklist)malloc(sizeof(productnode));
+    printf("请输入第%d个产品名称:\n",1);
+    scanf("%s",&(p->product_name));
+
+	fprintf(fp,"%s",p->product_name);
+
+    printf("请输入产品总量:\n");
+    scanf("%d",&(p->product_quantity));
+	fprintf(fp,"%d",p->product_quantity);
+    printf("请输入产品进货日期(年-月-日):\n");
+    scanf("%d-%d-%d",&((p->buy_time).year),&((p->buy_time).month),&((p->buy_time).day));
+	fprintf(fp,"%d-%d-%d\t",(p->buy_time).year,(p->buy_time).month,(p->buy_time).day);
+    printf("请输入产品单价:\n");
+    scanf("%lf",&(p->product_price));
+	fprintf(fp,"%lf",p->product_price);
+    printf("请输入产品销售数量:\n");
+    scanf("%d",&(p->sales_quantity));
+    fprintf(fp,"%d",p->sales_quantity);
+    printf("请输入产品销售时间(年-月-日):\n");
+    scanf("%d-%d-%d",&((p->sales_time).year),&((p->sales_time).month),&((p->sales_time).day));
+	fprintf(fp,"%d-%d-%d\t",(p->sales_time).year,(p->sales_time).month,(p->sales_time).day);
+    p->product_income=(p->product_price)*(p->sales_quantity);
+    p->product_stock=(p->product_quantity)-(p->sales_quantity);
+    L.kindelem[i].first_product=p;
+    p->next=NULL;
+   }
+   for(j=1;j<k;j++)
+   {
+   q=(plinklist)malloc(sizeof(productnode));
+         printf("请输入第%d个产品名称:\n",(j+1));
+         scanf("%s",&(q->product_name));
+		 fprintf(fp,"%s",q->product_name);
+         printf("请输入产品总量:\n");
+         scanf("%d",&(q->product_quantity));
+		 fprintf(fp,"%d",q->product_quantity);
+      printf("请输入产品进货日期(年-月-日):\n");
+      scanf("%d-%d-%d",&((q->buy_time).year),&((q->buy_time).month),&((q->buy_time).day));
+	  fprintf(fp,"%d-%d-%d\t",(q->buy_time).year,(q->buy_time).month,(q->buy_time).day);
+         printf("请输入产品单价:\n");
+      scanf("%lf",&(q->product_price));
+	  fprintf(fp,"%lf",q->product_price);
+         printf("请输入产品销售数量:\n");
+         scanf("%d",&(q->sales_quantity));
+		 fprintf(fp,"%d",q->sales_quantity);
+      printf("请输入产品销售时间(年-月-日):\n");
+      scanf("%d-%d-%d",&((q->sales_time).year),&((q->sales_time).month),&((q->sales_time).day));
+	  fprintf(fp,"%d-%d-%d\t",(q->sales_time).year,(q->sales_time).month,(q->sales_time).day);
+         q->product_income=(q->product_price)*(q->sales_quantity);
+      q->product_stock=(q->product_quantity)-(q->sales_quantity);
+   q->next=p->next;
+   p->next=q;
+         p=q;
+   }
+   L.length++;
+ 
+  }
+  fclose(fp);
+  return ok;
+}
+
+int Add(sqlist &L)//添加商品的数量
+{
+	//FILE * fp;
+    plinklist p,q;
+    int k,j,n;
+    char pkindname[20];
+ printf("请输入添加产品所属的商品类：\n");
+ scanf("%s",&pkindname);
+    for(k=0;k<L.length;k++)//查找该商品
+    {
+        if(strcmp((L.kindelem[k]).pkindname,pkindname)==0)
+  {
+   printf("请输入所要添加的产品类数量(个)：\n");
+         scanf("%d",&n);
+   L.kindelem[k].kind_number=L.kindelem[k].kind_number+n;
+   if(L.kindelem[k].first_product==NULL)//商品下没产品
+   {
+    q=(plinklist)malloc(sizeof(productnode));
+                printf("请输入需添加产品的名称:\n");
+                scanf("%s",&(q->product_name));
+                printf("请输入产品总量:\n");
+                scanf("%d",&(q->product_quantity));
+                printf("请输入进货日期(年-月-日):\n");
+                scanf("%d-%d-%d",&((q->buy_time).year),&((q->buy_time).month),&((q->buy_time).day));
+                printf("请输入产品单价:\n");
+                scanf("%lf",&(q->product_price));
+                printf("请输入销售数量:\n");
+                scanf("%d",&(q->sales_quantity));
+                printf("请输入销售时间(年-月-日):\n");
+                scanf("%d-%d-%d",&((q->sales_time).year),&((q->sales_time).month),&((q->sales_time).day));
+       q->product_income=(q->product_price)*(q->sales_quantity);
+          q->product_stock=(q->product_quantity)-(q->sales_quantity);
+                q->next=NULL;
+                L.kindelem[k].first_product=q;
+                p=L.kindelem[k].first_product;
+			//	fp=fopen("d:\\库存.txt","wb");
+
+
+    for(j=1;j<n;j++)
+    { 
+     
+        q=(plinklist)malloc(sizeof(productnode));
+                    printf("请输入需添加产品的名称:\n");
+                    scanf("%s",&(q->product_name));
+                    printf("请输入产品总量:\n");
+                    scanf("%d",&(q->product_quantity));
+                    printf("请输入进货日期(年-月-日):\n");
+                    scanf("%d-%d-%d",&((q->buy_time).year),&((q->buy_time).month),&((q->buy_time).day));
+                    printf("请输入产品单价:\n");
+                    scanf("%lf",&(q->product_price));
+                    printf("请输入销售数量:\n");
+                    scanf("%d",&(q->sales_quantity));
+                    printf("请输入销售时间(年-月-日):\n");
+                    scanf("%d-%d-%d",&((q->sales_time).year),&((q->sales_time).month),&((q->sales_time).day));
+           q->product_income=(q->product_price)*(q->sales_quantity);
+              q->product_stock=(q->product_quantity)-(q->sales_quantity);
+          
+                    q->next=p->next;
+     p->next=q;
+                    p=q;
+    }
+   }
+   else//商品下有产品
+   {
+    p=L.kindelem[k].first_product;
+    for(j=0;j<n;j++)
+    { 
+     
+        q=(plinklist)malloc(sizeof(productnode));
+                    printf("请输入需添加产品的名称:\n");
+                    scanf("%s",&(q->product_name));
+                    printf("请输入产品总量:\n");
+                    scanf("%d",&(q->product_quantity));
+                    printf("请输入进货日期(年-月-日):\n");
+                    scanf("%d-%d-%d",&((q->buy_time).year),&((q->buy_time).month),&((q->buy_time).day));
+                    printf("请输入产品单价:\n");
+                    scanf("%lf",&(q->product_price));
+                    printf("请输入销售数量:\n");
+                    scanf("%d",&(q->sales_quantity));
+                    printf("请输入销售时间(年-月-日):\n");
+                    scanf("%d-%d-%d",&((q->sales_time).year),&((q->sales_time).month),&((q->sales_time).day));
+           q->product_income=(q->product_price)*(q->sales_quantity);
+              q->product_stock=(q->product_quantity)-(q->sales_quantity);
+          
+     for(p=L.kindelem[k].first_product;(p->next)!=NULL;p=p->next);
+     q->next=p->next;
+                    p->next=q;
+                    p=q;
+    }//for
+   }//else
+   break;
+  }//if
+ }//for
+    if(k>=L.length)//没有该商品类
+    {
+  strcpy(L.kindelem[k].pkindname,pkindname);
+  L.length++;
+  printf("请输入所要添加的产品类数量(个)：\n");
+     scanf("%d",&n);
+  L.kindelem[k].kind_number=n;
+  for(j=0;j<n;j++)
+  {
+   p=(plinklist)malloc(sizeof(productnode));
+            printf("请输入此产品类所含产品的产品名称:\n");
+      scanf("%s",&(p->product_name));
+      printf("请输入产品总量:\n");
+      scanf("%d",&(p->product_quantity));
+      printf("请输入产品的进货日期(年-月-日):\n");
+      scanf("%d-%d-%d",&((p->buy_time).year),&((p->buy_time).month),&((p->buy_time).day));
+      printf("请输入产品的产品单价:\n");
+      scanf("%lf",&(p->product_price));
+      printf("请输入产品的销售数量:\n");
+      scanf("%d",&(p->sales_quantity));
+      printf("请输入产品的销售时间(年-月-日):\n");
+      scanf("%d-%d-%d",&((p->sales_time).year),&((p->sales_time).month),&((p->sales_time).day));
+      p->product_income=(p->product_price)*(p->sales_quantity);
+      p->product_stock=(p->product_quantity)-(p->sales_quantity);
+            L.kindelem[k].first_product=p;
+      p->next=NULL;
+  }//for
+    }//if
+    return ok;
+}
+
+void Alter(sqlist &L)
+{
+    int i,buy_number,order,sales_number,flag=0;
+ double price;
+ char pkindname[10],product_name[10];
+    plinklist p;
+ printf("请输入你所要修改的商品类：\n");
+ scanf("%s",&pkindname);
+    for(i=0;i<L.length;i++)
+    {
+  if(strcmp((L.kindelem[i]).pkindname,pkindname)==0)//找到商品
+  {
+   int m=0;
+   printf("请输入你所要修改的产品名称：\n");
+         scanf("%s",&product_name);
+   for(p=L.kindelem[i].first_product;p!=NULL;p=p->next)//产品匹配
+   {
+    m++;
+    if(strcmp(p->product_name,product_name)==0)//找到产品
+    {
+     printf("……………………………………………\n");
+                 printf("修改选项：\n");
+                 printf("\t1--->进货日期\n");//修改这些商品属性
+                 printf("\t2--->进货\n");
+                 printf("\t3--->销售\n");
+                 printf("\t4--->单价变动\n");
+                 printf("\t0--->返回\n");
+                 printf("……………………………………………\n");
+loop:
+                 printf("请进行选择：(0-7)\n");
+                 scanf("%d",&order);
+                 switch(order)
+     {
+     case 1:
+      printf("新的进货日期(年-月-日):\n");
+               scanf("%d-%d-%d",&((p->buy_time).year),&((p->buy_time).month),&((p->buy_time).day));
+               goto loop;
+              case 2:
+               printf("进货(个)：\n");
+      scanf("%d",&buy_number);
+               p->product_quantity=p->product_quantity+buy_number;
+      p->product_stock=(p->product_stock+buy_number);
+               goto loop;
+              case 3:
+                        printf("销售(个):\t");
+      scanf("%d",&sales_number);
+      p->sales_quantity=p->sales_quantity+sales_number;
+      p->product_stock=(p->product_stock)-sales_number;
+               goto loop;
+                    case 4:
+                        printf("新单价(元)：\t");
+               scanf("%lf",&price);
+      p->product_price=price;
+      p->product_income=(p->sales_quantity)*(p->product_price);
+                  goto loop;
+              case 0:
+      system("cls");
+      flag=1;
+                        break;
+              default:
+               printf("对不起，你输入有误！");
+               goto loop;
+     }//switch
+     break;//找到就跳出
+    }//if 
+   }//for
+   if(m>=L.kindelem[i].kind_number&&flag==0)
+   {
+    printf("对不起，你要修改的产品没有找到！\n");
+   }
+   break;//找到就跳出
+  }//if
+ }//for
+    if(i>=L.length)
+    {
+  printf("对不起，你所要修改的商品没找到！\n");
+ }
+}
+
+void View(sqlist &L)
+{
+ int i,order,flag=0;
+ char pkindname[20],product_name[20];
+ plinklist p;
+ printf("请输入待查询产品所商品类：\n");
+ scanf("%s",&pkindname);
+ for(i=0;i<L.length;i++)                     //进行商品匹配
+ {
+  if(strcmp((L.kindelem[i]).pkindname,pkindname)==0)//找到商品
+  {
+   int m=0;
+   printf("输入待查询的产品：\n");
+         scanf("%s",&product_name);
+   for(p=L.kindelem[i].first_product;p!=NULL;p=p->next)//进行产品的匹配
+   {
+    m++;
+    if(strcmp(p->product_name,product_name)==0)//找到产品
+    {
+                    printf("查询选项：\n");
+           printf("\t1---进货日期\n");
+           printf("\t2---产品总量\n");
+           printf("\t3---销售数量\n");
+           printf("\t4---产品单价\n");
+           printf("\t5---产品库存\n");
+           printf("\t6---产品销售收益\n");
+           printf("\t7---全部信息\n");
+           printf("\t0---返回\n");
+loop:
+     printf("请进行选择：(0-7)\n");
+           scanf("%d",&order);
+           switch(order)
+     {
+     case 1:
+      printf("*进货日期\t");
+               printf("%d-%d-%d\n",(p->buy_time).year,(p->buy_time).month,(p->buy_time).day);
+      printf("………………………………………\n");
+      goto loop;
+           case 2:
+      printf("*产品总量\t");
+            printf("%d\n",p->product_quantity);
+      printf("………………………………………\n");
+            goto loop;
+           case 3:
+      printf("*销售数量\t");
+               printf("%d\n",p->sales_quantity);
+      printf("………………………………………\n");
+            goto loop;
+                    case 4:
+      printf("*产品单价\t");
+               printf("%.2lf\n",p->product_price);
+      printf("………………………………………\n");
+            goto loop;
+           case 5:
+      printf("*产品库存\t");
+               printf("%d\n",p->product_stock);
+            goto loop;
+     case 6:
+      printf("*销售收益\t");
+               printf("%.2lf\n",p->product_income);
+      printf("………………………………………\n");
+            goto loop;
+     case 7:
+      printf("*查询信息如下：\n");
+               printf("\t");
+               printf("产品的名称\t");
+               printf("%s\t",p->product_name);
+               printf("进货日期\t");
+               printf("%d-%d-%d\n",(p->buy_time).year,(p->buy_time).month,(p->buy_time).day);
+               printf("\t");
+               printf("产品总量\t");
+                        printf("%d\t",p->product_quantity); 
+               printf("销售数量\t");
+               printf("%d\n",p->sales_quantity);
+               printf("\t");
+               printf("产品单价\t");
+               printf("%.2lf\t",p->product_price);
+               printf("销售日期\t");
+               printf("%d-%d-%d\n",(p->sales_time).year,(p->sales_time).month,(p->sales_time).day);
+                  printf("\t");
+               printf("产品库存\t");
+               printf("%d\t",p->product_stock);
+               printf("产品销售收益\t");
+               printf("%.2lf\n",p->product_income);
+      printf("………………………………………………………………………\n");
+            goto loop;
+     case 0:
+      system("cls");
+      flag=1;
+                        break;
+     default:
+      printf("对不起，你输入有误！");
+            goto loop;
+     }//switch
+     break;
+    }//if 
+   }//for
+   if(m>=L.kindelem[i].kind_number&&flag==0)
+   {
+    printf("对不起，你所查询的产品不存在！\n");
+   }
+   break;//找到就跳出
+        }//if
+ }//for
+ if(i>=L.length)//没找到商品
+ {
+  printf("对不起，你所查询的商品不存在\n");
+ }
+}
+
+void Display(sqlist &L)//遍历顺序表
+{
+  int i;
+  plinklist p;
+  if(L.length<=0)//没商品
+  {
+   printf("\t全部抛售！\n…………………………………………\n");
+  }
+  else//有商品
+  {
+   printf("\t本店共有%d种商品\t",L.length);
+   for(i=0;i<L.length;i++)
+   {
+             printf("\t%s\t",L.kindelem[i].pkindname);
+   }
+   printf("\n");
+  }
+  for(i=0;i<L.length;i++)
+  {
+   if(L.kindelem[i].first_product)
+   {
+    int number=1;
+    printf("商品%d：\t",i+1);
+    printf("%s\n",L.kindelem[i].pkindname);
+    printf("\t该商品下有%d个产品\n",L.kindelem[i].kind_number);
+    for(p=L.kindelem[i].first_product;p!=NULL;p=p->next)
+    {
+     printf("\t第%d个产品\t",number);
+        printf("%s\n",p->product_name);
+        printf("\t进货日期\t");
+        printf("%d-%d-%d\n",(p->buy_time).year,(p->buy_time).month,(p->buy_time).day);
+        printf("\t产品总量\t");
+                 printf("%d\n",p->product_quantity); 
+        printf("\t销售数量\t");
+     printf("%d\n",p->sales_quantity);
+        printf("\t产品单价\t");
+        printf("%.2lf\n",p->product_price);
+        printf("\t销售日期\t");
+     printf("%d-%d-%d\n",(p->sales_time).year,(p->sales_time).month,(p->sales_time).day);
+        printf("\t产品库存\t");
+        printf("%d\n",p->product_stock);
+        printf("\t销售收益\t");
+        printf("%.2lf\n",p->product_income);
+     printf("……………………………………………………\n");
+     number++;
+    }
+   }
+   else
+   {
+    printf("商品类：\t");
+    printf("%s\n",L.kindelem[i].pkindname);
+    printf("\t没有该商品了，谢谢你的光顾！\n");
+   }
+  }
+    
+}
+
+void Delete(sqlist &L)//顺序表的删除
+{
+ plinklist p,q;
+ char pkindname[20],product_name[20];
+ int i;
+ printf("请输入待删除产品所属的商品类：\n");
+ scanf("%s",&pkindname);
+ for(i=0;i<L.length;i++)
+    {
+        if(strcmp((L.kindelem[i]).pkindname,pkindname)==0)
+  {
+   printf("输入待删除的产品：\n");
+         scanf("%s",&product_name);
+            L.kindelem[i].kind_number=L.kindelem[i].kind_number-1;
+            if(L.kindelem[i].first_product==NULL)//该商品下没产品
+   {
+        printf("对不起，该商品下产品已全卖光了，谢谢惠顾！\n"); 
+   }
+         else//该商品下有产品
+   {
+           p=L.kindelem[i].first_product;
+           while(strcmp(p->product_name,product_name)&&p->next!=NULL)//找该产品
+     {
+            q=p;
+            p=p->next;
+     }
+           if(!(strcmp(p->product_name,product_name)))//找到该产品
+     {
+             if(p==L.kindelem[i].first_product)
+       {  
+        L.kindelem[i].first_product=p->next;
+       }
+             else
+       {q->next=p->next;}
+             printf("该产品已被删除\n……………………………………\n");
+     }
+           else
+     { printf("对不起，该产品不存在\n………………………………\n");}
+   }//else
+   break;
+  }//if
+    }//for
+    if(i>=L.length)//没找到商品
+    {
+  printf("对不起，没找到该商品！\n");
+ }
+}
+
+void  password()
+{
+    FILE *fp,*fp1;
+ char ch[20],c;
+    fp1=fopen("d:\\密码.txt","rb");
+    if(!fp1)
+ {
+  printf("对不起，没有找到密码文件!请及时检查!");
+        exit(1);
+ }
+ else
+ {
+  fscanf(fp1,"%s",ch);
+  if(ch[0]<0)//判断是否有初始密码
+  { 
+   printf("          销售管理系统\n……………………………………………………\n");
+      printf("对不起，你还没有设置密码！\n请创建密码:\n");
+      fp=fopen("d:\\密码.txt","wb");
+      //scanf("%s",&ch);
+	  int i=0;
+   for(;(c=getch())!=13;i++)
+   {
+	   if(c==8)
+	   {
+			system("cls");
+            printf("请输入密码:\n");
+			for(int j=0;j<i-1;j++)
+				printf("*");
+			i-=2;
+	   }
+	   else
+	   {
+		   ch[i]=c;
+           printf("*");
+	   }
+   }
+         printf("\n");
+         ch[i]='\0';
+      if(fp)
+   {
+                fprintf(fp,"%s",ch);
+   }
+      fclose(fp);
+  }
+ } 
+ fclose(fp1);
+}
+
+void check_password()
+{
+ FILE* fp;
+ char password[20],m1[20],m2[20],c;//m1 新输入的密码 password 注册密码
+ system("cls");//清屏
+    printf("进入管理系统之前请先登录\n");
+ fp=fopen("d:\\密码.txt","r");
+ if(fp)
+ {
+        fscanf(fp,"%s",password);
+ }
+ printf("输入密码:");
+ int i=0;
+ for(;(c=getch())!=13;i++)
+ {
+  if(c==8)
+  {
+   system("cls");
+   printf("进入管理系统之前请先登录\n");
+   printf("输入密码:");
+      for(int j=0;j<i-1;j++)
+    printf("*");
+   i-=2;
+  }
+  else
+  {
+   m1[i]=c;
+      printf("*");
+  }
+ }
+ printf("\n");
+ m1[i]='\0';
+    if(strcmp(m1,password))//从这里开始判断密码是否正确
+ {
+  while(strcmp(m2,password))//密码错误
+  {
+   system("cls");
+   printf("对不起，你输入的密码有误,请重新输入:\n");
+      for(int i=0;(c=getch())!=13;i++)//输入密码
+   {
+    if(c==8)
+    {
+     system("cls");
+     printf("对不起，你输入的密码有误,请重新输入:\n");
+     for(int j=0;j<i-1;j++)
+         printf("*");
+     i-=2;
+    }
+    else
+    {
+     m2[i]=c;
+        printf("*");
+    }
+   }
+   m2[i]='\0';
+      printf("\n");
+      if(!strcmp(m2,password))//密码正确进入系统
+   {
+    system("cls");
+    printf("       欢迎进入销售管理系统\n");
+    printf("……………………………………………………\n");
+       break;
+   }
+  }
+ }
+ else if(!strcmp(m1,password))//密码正确进入系统
+ {
+  system("cls");
+  printf("      欢迎进入销售管理系统\n");
+  printf("………………………………………………\n");
+ }
+}
+
+void menu_operation()
+{
+ printf("\t\t菜单\n");
+ printf("………………………………………………\n");
+ printf("\t1--->初始化\n");
+ printf("\t2--->添加\n");
+ printf("\t3--->更改\n");
+ printf("\t4--->查询\n");
+ printf("\t5--->删除\n");
+ printf("\t6--->库存\n");
+ printf("\t0--->退出\n");
+}
+void main(void)
+{
+ int order;
+ password();
+ check_password();
+ sqlist L;
+ Init(L);
+ 
+loop:
+ menu_operation();
+ printf("可以操作了\n");
+ scanf("%d",&order);
+ switch(order)
+ {
+    case 1:
+  system("cls");
+  Create(L);
+  goto loop;
+ case 2:
+  system("cls");
+  Add(L);
+  goto loop;
+ case 3:
+  system("cls");
+  Alter(L);
+  goto loop;
+ case 4:
+  system("cls");
+     View(L);
+  goto loop;
+ case 5:
+  system("cls");
+  Delete(L);
+  goto loop;
+ case 6:
+  system("cls");
+  printf("本店产品库存管理表：\n");
+  Display(L);
+  goto loop;
+ case 0:
+  exit(0);
+ }
+}
