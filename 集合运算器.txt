@@ -1,0 +1,308 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<conio.h>
+
+typedef struct node{
+int xs;
+int zs;
+struct node * next;
+} Dnode, * Dnodelist; /*定义结构体*/
+Dnodelist Creat_node(void) /*链表初始化*/
+{
+Dnodelist D;
+D=(Dnodelist) malloc(sizeof(Dnode) ) ;
+if(D)
+D->next=NULL;
+return D;
+}
+
+int Insert_node(Dnodelist D, int xs, int zs) /*插入函数*/
+{
+Dnodelist p;
+Dnodelist q;
+Dnodelist r;
+p=D;
+while(p->next)
+{
+r=p;
+p=p->next;
+if(zs==p->zs) /*指数相等， 系数直接相
+加， 结束*/
+{
+p->xs=p->xs+xs;
+return 1;
+}
+else if(zs>p->zs) /*指数大于当前数据的， 将数据插入当前数据
+之前， 结束*/
+{
+q=Creat_node() ;
+q->xs=xs;
+q->zs=zs;
+r->next=q;
+q->next=p;
+return 1;
+}
+} /*while(p->next) */
+q=Creat_node() ; /*要插入的数据指数最小， 直接插入至链
+表最后*/
+q->xs=xs;
+q->zs=zs;
+q->next=p->next;
+p->next=q;
+return 1;
+free(p) ;
+free(q) ;
+free(r) ;
+}
+Dnodelist Creat_Dmeth(int length) /*创建多项式*/
+{
+int i, m, n;
+Dnodelist D;
+D=Creat_node() ;
+for(i=0; i<length; i++) /*以三组数据为例*/
+{
+scanf("%d %d", &m, &n) ;
+Insert_node(D, m, n) ; /*调用插入函数， 将输入的系数指数
+插入链表*/
+}
+return D;
+}
+Dnodelist Mulresult(Dnodelist D1, Dnodelist D2) /*多项式相乘*/
+{
+Dnodelist D;
+Dnodelist p, q;
+int x, z;
+D=Creat_node() ;
+p=D1->next;
+q=D2->next;
+while(q)
+{
+while(p)
+{
+x=p->xs*q->xs; /*系数相乘， 指数相加*/
+z=p->zs+q->zs;
+Insert_node(D, x, z) ;
+p=p->next;
+}
+p=D1->next;
+q=q->next;
+}
+return D;
+}
+Dnodelist Addresult(Dnodelist D1, Dnodelist D2) /*多项式相加*/
+{
+Dnodelist D;
+Dnodelist p, q;
+int x, z;
+D=Creat_node() ;
+p=D1->next;
+q=D2->next;
+while(q)
+{
+x=q->xs;
+z=q->zs;
+Insert_node(D, x, z) ;
+q=q->next;
+}
+while(p)
+{
+x=p->xs;
+z=p->zs;
+Insert_node(D, x, z) ;
+p=p->next; /*直接插入数据， 利用插入函数可完
+成该功能*/
+}
+return D;
+}
+Dnodelist Subresult(Dnodelist D1, Dnodelist D2) /*多项式相减*/
+{
+Dnodelist D;
+Dnodelist p, q;
+int x, z;
+D=Creat_node() ;
+p=D1->next;
+q=D2->next;
+while(p&&q)
+{
+if((p->zs) <(q->zs) ) /*指数小（1 的数据在 2 中不存在），
+直接插入*/
+{
+x=-(q->xs) ; /*由于是式 1 减式 2， 所以系数置负
+*/
+z=q->zs;
+Insert_node(D, x, z) ;
+q=q->next;
+}
+else if((p->zs) >(q->zs) ) /*指数大（2 的数据在 1 中不存在），
+直接插入*/
+{
+x=p->xs;
+z=p->zs;
+Insert_node(D, x, z) ;
+p=p->next;
+}
+else /*指数相同的先将系数相减， 再插
+入*/
+{
+z=q->zs;
+x=(p->xs) -(q->xs) ;
+Insert_node(D, x, z) ;
+p=p->next;
+q=q->next;
+}
+} /*while(p&&q) */
+while(p)
+{
+x=p->xs;
+z=p->zs;
+Insert_node(D, x, z) ;
+p=p->next;
+}
+while(q)
+{
+x=-(q->zs) ;
+z=q->zs;
+Insert_node(D, x, z) ;
+q=q->next;
+} /*将未遍历完的数据直接插入
+*/
+return D;
+}
+//Dnodelist select(Dnodelist D1, Dnodelist D2) /*选择函数*/
+//{
+//Dnodelist D;
+//int s;
+//printf("请选择: \n1: 相乘\n2: 相加\n3: 相减\n") ;
+//while(1)
+//{
+//scanf("%d", &s) ;
+//switch(s)
+//{
+//case 1: D=Mulresult(D1, D2) ; /*调用相乘函数*/
+//printf("相乘结果(系数, 指数) : \n") ;
+//break;
+//case 2: D=Addresult(D1, D2) ; /*调用相加函数*/
+//printf("相加结果(系数, 指数) : \n") ;
+//break;
+//case 3: D=Subresult(D1, D2) ; /*调用相减函数*/
+//printf("相减结果(系数, 指数) : \n") ;
+//break;
+//case 4:exit(0);
+//default:
+//printf("无此选项\n") ;
+//break;
+//}
+//return D;
+//}
+//}
+/*显示某个多项式*/
+//void Show(Dnodelist D)
+//{
+//	Dnodelist r;
+//    r=D->next;
+//	while(r)
+//	{
+//		if( r->xs > 0 )
+//		{
+//			if( i != 0 )	
+//				printf(" + ");
+//			if( (t+i)->coe != 1 )    
+//				printf("%d",(t+i)->coe);
+//		}
+//		else if( (t+i)->coe < 0 )
+//		{   printf(" - ");
+//			if( (t+i)->coe != -1 )
+//				printf("%d",-(t+i)->coe);
+//		}
+//		if( (t+i)->ind == 0 )
+//			continue;
+//		printf("x");
+//		if( (t+i)->ind == 1 )
+//			continue;
+//		printf("^");
+//		printf("%d",(t+i)->ind);
+//		
+//	}
+//	printf("\n");
+//}
+void Show(Dnodelist D) /*显示（输出） 函数*/
+{
+Dnodelist r;
+r=D->next;
+while(r)
+{
+printf("%dX^%d", r->xs, r->zs) ;
+r=r->next;
+if(r!=NULL)
+	if(r->xs>=0) printf("+") ;
+}
+printf("\n") ;
+}
+void Shows(Dnodelist D) /*显示（输出） 函数*/
+{
+
+  Dnodelist p,q,pr,r;
+  p=D->next;
+  q = NULL;
+ D->next=NULL;
+  while(p){
+    pr = p->next;
+    p->next = q;
+    q = p;
+    p = pr;
+  }
+  D->next=q;
+  r=D->next;
+while(r)
+{
+printf("%dX^%d", r->xs, r->zs) ;
+r=r->next;
+if(r!=NULL)
+	if(r->xs>=0) printf("+") ;
+}
+printf("\n") ;
+}
+void main()
+{
+Dnodelist D1, D2, D;
+int length,i;
+D1=Creat_node() ;
+D2=Creat_node() ; /*D1 为多项式 1， D2 为多项式 2， 初始化*/
+printf("输入多项式 1 的组数： \n" ) ;
+scanf("%d", &length) ;
+printf("输入多项式 1 系数 指数： (%d 组) \n", length) ;
+D1=Creat_Dmeth(length) ; /*创建多项式 1*/
+printf("输入多项式 2 的组数： \n" ) ;
+scanf("%d", &length) ;
+printf("输入多项式 2 系数 指数： (%d 组) \n", length) ;
+D2=Creat_Dmeth(length) ; /*创建多项式 2*/
+printf("请选择: \n1: 相乘\n2: 相加\n3: 相减\n4: 退出:\n") ;
+while(1)
+{
+int s;
+scanf("%d", &s) ;
+switch(s)
+{
+case 1: D=Mulresult(D1, D2) ; /*调用相乘函数*/
+printf("相乘结果 : \n") ;
+break;
+case 2: D=Addresult(D1, D2) ; /*调用相加函数*/
+printf("相加结果 : \n") ;
+break;
+case 3: D=Subresult(D1, D2) ; /*调用相减函数*/
+printf("相减结果 : \n") ;
+break;
+case 4:exit(0);
+default:
+printf("无此选项\n") ;
+break;
+}
+printf("请选择: \n1: 降序\n2: 升序\n");
+scanf("%d",&i);
+if(i==1)
+  Show(D) ;/*输出显示*/
+if(i==2)
+  Shows(D);
+}
+getch() ;
+}
